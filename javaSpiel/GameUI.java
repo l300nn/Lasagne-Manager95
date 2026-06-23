@@ -29,21 +29,22 @@ public class GameUI extends JFrame {
     private int selectedHorseIndex = -1;
 
     private Timer raceTimer;
+    private Timer postRaceTimer;
     private double[] currentProgress;
 
     private Random random = new Random();
     private int commentCooldown = 0;
 
-    // Farbkonzept - Modern Dark Theme
-    private final Color COLOR_BG = new Color(18, 18, 18);
-    private final Color COLOR_CARD_BG = new Color(30, 30, 30);
-    private final Color COLOR_TEXT_PRIMARY = new Color(240, 240, 240);
-    private final Color COLOR_TEXT_SECONDARY = new Color(160, 160, 160);
-    private final Color COLOR_PRIMARY = new Color(0, 120, 215);
-    private final Color COLOR_ACCENT = new Color(39, 174, 96);
-    private final Color COLOR_DANGER = new Color(220, 53, 69);
-    private final Color COLOR_HOVER = new Color(45, 45, 45);
-    private final Color COLOR_SELECTED = new Color(60, 60, 80);
+    // Farbkonzept - 90s DOS Arcade Theme
+    private final Color COLOR_BG = Color.BLACK;
+    private final Color COLOR_CARD_BG = new Color(0, 0, 170); // Classic DOS Blue
+    private final Color COLOR_TEXT_PRIMARY = Color.WHITE;
+    private final Color COLOR_TEXT_SECONDARY = Color.CYAN;
+    private final Color COLOR_PRIMARY = Color.YELLOW;
+    private final Color COLOR_ACCENT = Color.MAGENTA;
+    private final Color COLOR_DANGER = Color.RED;
+    private final Color COLOR_HOVER = new Color(0, 0, 255); // Bright Blue
+    private final Color COLOR_SELECTED = new Color(170, 0, 170); // DOS Purple
 
     public GameUI() {
         raceLogik = new RaceLogik();
@@ -99,8 +100,8 @@ public class GameUI extends JFrame {
         JPanel newsPanel = new JPanel(new BorderLayout());
         newsPanel.setBackground(new Color(220, 10, 30));
         breakingNewsLabel = new JLabel("🎤 LIVE: WILLKOMMEN IN VINEWOOD!");
-        breakingNewsLabel.setFont(new Font("Impact", Font.ITALIC, 24));
-        breakingNewsLabel.setForeground(Color.WHITE);
+        breakingNewsLabel.setFont(new Font("Monospaced", Font.BOLD, 24));
+        breakingNewsLabel.setForeground(Color.YELLOW);
         breakingNewsLabel.setHorizontalAlignment(SwingConstants.CENTER);
         newsPanel.add(breakingNewsLabel, BorderLayout.CENTER);
 
@@ -169,12 +170,98 @@ public class GameUI extends JFrame {
 
         logCard.add(scrollPane, BorderLayout.CENTER);
 
-        startButton = new JButton("Rennen starten");
-        styleModernButton(startButton, COLOR_DANGER, Color.WHITE);
-        startButton.setFont(new Font("Segoe UI", Font.BOLD, 18));
+        startButton = new JButton("START") {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+                int w = getWidth();
+                int h = getHeight();
+                boolean enabled = isEnabled();
+                boolean pressed = getModel().isPressed();
+                boolean hover = getModel().isRollover();
+
+                Color bezel = new Color(20, 20, 20);
+                Color bezelHighlight = new Color(60, 60, 60);
+                
+                Color baseColor = enabled ? (hover ? new Color(255, 30, 30) : new Color(220, 10, 10)) : new Color(80, 20, 20);
+                Color glowColor = enabled ? (hover ? new Color(255, 120, 120) : new Color(255, 80, 80)) : new Color(100, 40, 40);
+
+                // Hintergrund füllen, um Artefakte zu vermeiden
+                g2.setColor(getParent().getBackground());
+                g2.fillRect(0, 0, w, h);
+
+                // Bezel (äußerer schwarzer/grauer Rand aus Kunststoff)
+                g2.setColor(bezelHighlight);
+                g2.fillRoundRect(10, 10, w - 20, h - 20, 30, 30);
+                g2.setColor(bezel);
+                g2.fillRoundRect(13, 13, w - 26, h - 26, 25, 25);
+
+                int offset = pressed ? 6 : 0; // Beim Drücken geht der Knopf spürbar nach unten
+
+                // Knopf-Schatten/Tiefe
+                g2.setColor(new Color(100, 0, 0));
+                g2.fillRoundRect(18, 18, w - 36, h - 36, 20, 20);
+
+                // Knopf-Oberfläche
+                GradientPaint gp = new GradientPaint(0, 18 + offset, glowColor, 0, h - 26 + offset, baseColor);
+                g2.setPaint(gp);
+                g2.fillRoundRect(18, 18 + offset, w - 36, h - 44, 20, 20);
+
+                // Plastik/Glas-Glanz (obere Hälfte glänzt)
+                g2.setColor(new Color(255, 255, 255, 80));
+                g2.fillRoundRect(22, 20 + offset, w - 44, (h - 44) / 3, 15, 15);
+
+                // Blink-Effekt für den Arcade Automaten Look
+                boolean blink = enabled && (System.currentTimeMillis() % 1000 < 500);
+                
+                g2.setFont(new Font("Monospaced", Font.BOLD, 22));
+                FontMetrics fm = g2.getFontMetrics();
+                String text = getText();
+                int tx = (w - fm.stringWidth(text)) / 2;
+                int ty = (h - fm.getHeight()) / 2 + fm.getAscent() + offset - 4;
+
+                // Leuchtende Schrift
+                if (enabled) {
+                    if (blink) {
+                        g2.setColor(new Color(255, 255, 180, 200)); // Helles gelbliches Leuchten
+                        g2.drawString(text, tx - 1, ty - 1);
+                        g2.drawString(text, tx + 1, ty + 1);
+                        g2.setColor(Color.WHITE);
+                    } else {
+                        g2.setColor(new Color(255, 180, 180, 100)); // Schwaches rotes Leuchten
+                        g2.drawString(text, tx - 1, ty - 1);
+                        g2.drawString(text, tx + 1, ty + 1);
+                        g2.setColor(new Color(255, 220, 220));
+                    }
+                } else {
+                    g2.setColor(Color.GRAY);
+                }
+                
+                g2.drawString(text, tx, ty);
+                g2.dispose();
+            }
+        };
+        startButton.setContentAreaFilled(false);
+        startButton.setFocusPainted(false);
+        startButton.setBorderPainted(false);
+        startButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         startButton.setEnabled(false);
         startButton.setPreferredSize(new Dimension(250, 0));
         startButton.addActionListener(e -> startRace());
+
+        // Timer
+        raceTimer = new Timer(50, e -> updateRaceTick());
+        postRaceTimer = new Timer(50, e -> {
+            raceTrackPanel.updateParticles();
+            raceTrackPanel.repaint();
+        });
+
+        // Repaint Timer für das Blinken des Buttons
+        new javax.swing.Timer(100, e -> {
+            if (startButton.isEnabled()) startButton.repaint();
+        }).start();
 
         bottomPanel.add(logCard, BorderLayout.CENTER);
         bottomPanel.add(startButton, BorderLayout.EAST);
@@ -187,24 +274,26 @@ public class GameUI extends JFrame {
     private JPanel createCardPanel(String title) {
         JPanel panel = new JPanel(new BorderLayout(0, 15));
         panel.setBackground(COLOR_CARD_BG);
-        panel.setBorder(BorderFactory.createEmptyBorder(15, 20, 15, 20));
+        panel.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.WHITE, 3),
+                BorderFactory.createEmptyBorder(12, 17, 12, 17)));
 
         if (!title.isEmpty()) {
             JLabel titleLabel = new JLabel(title);
-            titleLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
-            titleLabel.setForeground(COLOR_TEXT_PRIMARY);
+            titleLabel.setFont(new Font("Monospaced", Font.BOLD, 20));
+            titleLabel.setForeground(Color.YELLOW);
             panel.add(titleLabel, BorderLayout.NORTH);
         }
 
         return panel;
     }
 
-    private void styleModernButton(JButton btn, Color bgColor, Color fgColor) {
+    private void styleArcadeButton(JButton btn, Color bgColor, Color fgColor) {
         btn.setBackground(bgColor);
         btn.setForeground(fgColor);
-        btn.setFont(new Font("Segoe UI", Font.BOLD, 14));
+        btn.setFont(new Font("Monospaced", Font.BOLD, 16));
         btn.setFocusPainted(false);
-        btn.setBorderPainted(false);
+        btn.setBorder(BorderFactory.createLineBorder(Color.WHITE, 2));
         btn.setOpaque(true);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
@@ -224,6 +313,13 @@ public class GameUI extends JFrame {
     }
 
     private void prepareNewRace() {
+        if (postRaceTimer != null) {
+            postRaceTimer.stop();
+        }
+        if (raceTrackPanel != null) {
+            raceTrackPanel.setMoneyRain(false);
+        }
+
         raceLogik.prepareNewRace();
         updateBalanceLabel();
 
@@ -256,13 +352,13 @@ public class GameUI extends JFrame {
         headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 15, 10, 15));
 
         JLabel h1 = new JLabel("Pferd");
-        h1.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        h1.setForeground(COLOR_TEXT_SECONDARY);
+        h1.setFont(new Font("Monospaced", Font.BOLD, 16));
+        h1.setForeground(COLOR_PRIMARY);
         headerPanel.add(h1, BorderLayout.WEST);
 
         JLabel h2 = new JLabel("Quote", SwingConstants.CENTER);
-        h2.setFont(new Font("Segoe UI", Font.BOLD, 14));
-        h2.setForeground(COLOR_TEXT_SECONDARY);
+        h2.setFont(new Font("Monospaced", Font.BOLD, 16));
+        h2.setForeground(COLOR_PRIMARY);
         h2.setPreferredSize(new Dimension(80, 30));
         headerPanel.add(h2, BorderLayout.EAST);
 
@@ -282,9 +378,9 @@ public class GameUI extends JFrame {
             JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
             namePanel.setOpaque(false);
 
-            JLabel portraitLabel = new JLabel(createHorsePortrait(h.getColor(), 24, 24));
+            JLabel portraitLabel = new JLabel(createHorsePortrait(h, 24, 24));
             JLabel nameLabel = new JLabel((i + 1) + ". " + h.getName());
-            nameLabel.setFont(new Font("Segoe UI", Font.BOLD, 16));
+            nameLabel.setFont(new Font("Monospaced", Font.BOLD, 16));
             nameLabel.setForeground(COLOR_TEXT_PRIMARY);
 
             namePanel.add(portraitLabel);
@@ -293,7 +389,7 @@ public class GameUI extends JFrame {
 
             // Quote
             JLabel oddsLabel = new JLabel(String.valueOf(odds.get(i)), SwingConstants.CENTER);
-            oddsLabel.setFont(new Font("Segoe UI", Font.BOLD, 18));
+            oddsLabel.setFont(new Font("Monospaced", Font.BOLD, 18));
             oddsLabel.setForeground(COLOR_PRIMARY);
             oddsLabel.setPreferredSize(new Dimension(80, 30));
             rowPanel.add(oddsLabel, BorderLayout.EAST);
@@ -425,8 +521,8 @@ public class GameUI extends JFrame {
         }
     }
 
-    // Kleines Pixel-Portrait des Pferdes für das Wettbüro
-    private Icon createHorsePortrait(Color color, int width, int height) {
+    // Kleines detailliertes Pixel-Portrait des Pferdes für das Wettbüro
+    private Icon createHorsePortrait(Horse horse, int width, int height) {
         return new Icon() {
             @Override
             public void paintIcon(Component c, Graphics g, int x, int y) {
@@ -437,20 +533,39 @@ public class GameUI extends JFrame {
                 g2.setColor(new Color(20, 20, 20));
                 g2.fillRoundRect(x, y, width, height, 4, 4);
 
-                // Pferdekopf (Profil)
-                g2.setColor(color);
-                g2.fillRect(x + 6, y + 6, 12, 14); // Hals/Kopf
-                g2.fillRect(x + 14, y + 6, 6, 6); // Schnauze
+                Color color = horse.getColor();
 
+                // Pferdekopf (Profil) - Leicht zentriert
+                g2.setColor(color);
+                g2.fillRect(x + 5, y + 7, 8, 12); // Hals
+                g2.fillRect(x + 8, y + 4, 7, 5);  // Stirn/Kopf oben
+                g2.fillRect(x + 14, y + 6, 6, 5); // Schnauze
+                
+                g2.fillRect(x + 8, y + 1, 2, 4);  // Ohren
+
+                // Highlight für 3D-Look
+                Color highlight = color.brighter();
+                if (color.getRed() < 50 && color.getGreen() < 50 && color.getBlue() < 50) {
+                    highlight = new Color(80, 80, 80);
+                }
+                g2.setColor(highlight);
+                g2.fillRect(x + 8, y + 4, 7, 1);  // Kopf Highlight
+                g2.fillRect(x + 14, y + 6, 6, 1); // Schnauze Highlight
+                
                 // Mähne
-                g2.setColor(new Color(40, 40, 40));
-                g2.fillRect(x + 4, y + 6, 3, 10);
+                g2.setColor(new Color(30, 30, 30));
+                g2.fillRect(x + 3, y + 4, 4, 15);
 
                 // Auge
                 g2.setColor(Color.WHITE);
-                g2.fillRect(x + 12, y + 8, 2, 2);
+                g2.fillRect(x + 12, y + 6, 2, 2);
                 g2.setColor(Color.BLACK);
-                g2.fillRect(x + 13, y + 8, 1, 1);
+                g2.fillRect(x + 13, y + 6, 1, 1);
+
+                // Halfter / Zügel
+                g2.setColor(new Color(100, 50, 20));
+                g2.fillRect(x + 11, y + 8, 5, 2);
+                g2.fillRect(x + 15, y + 6, 2, 5);
             }
 
             @Override
@@ -563,10 +678,10 @@ public class GameUI extends JFrame {
                 comment = name + " verlangsamt das Tempo, um ein Selfie für die Subscriber zu machen.";
                 break;
             case "Pony Soprano":
-                comment = name + " macht der Konkurrenz ein Angebot, das sie nicht ablehnen kann (und zieht vorbei).";
+                comment = name + " macht der Konkurrenz ein Angebot, das sie nicht ablehnen kann.";
                 break;
             case "Glue Factory":
-                comment = name + " rennt um sein Leben – der Fahrer vom Transporter hat gewinkt!";
+                comment = name + " rennt um sein Leben – der Transporter hat gewinkt!";
                 break;
             case "Divorce Settlement":
                 comment = name + " nimmt die halbe Rennstrecke für sich in Anspruch!";
@@ -586,6 +701,69 @@ public class GameUI extends JFrame {
             case "Bitcoin Crash":
                 comment = name + " war kurz vorne und ist jetzt komplett im Keller.";
                 break;
+            case "Elon's Musk":
+                comment = name + " fliegt fast zum Mars, aber verfehlt dann doch die Kurve.";
+                break;
+            case "Zucker-Burger":
+                comment = name + " trackt gerade die Daten der anderen Pferde.";
+                break;
+            case "Influencer Tears":
+                comment = name + " hält an und verlangt Sponsoring für den weiteren Lauf!";
+                break;
+            case "Student Loan":
+                comment = name + " holt dich unweigerlich ein, egal wie schnell du rennst.";
+                break;
+            case "Wi-Fi Password":
+                comment = "Niemand weiß, wo " + name + " ist. Wahrscheinlich auf der Rückseite des Routers.";
+                break;
+            case "404 Not Found":
+                comment = name + " ist plötzlich spurlos von der Rennstrecke verschwunden!";
+                break;
+            case "Clickbait":
+                comment = "Du wirst nicht glauben, was " + name + " an der Ziellinie tut!!!";
+                break;
+            case "Terms & Conditions":
+                comment = "Niemand achtet auf " + name + ", aber am Ende gewinnt er immer.";
+                break;
+            case "Spam Folder":
+                comment = name + " ist voller Überraschungen, aber keiner will sie sehen.";
+                break;
+            case "NFT Bubble":
+                comment = name + " sah kurz nach Millionen aus, ist jetzt aber absolut wertlos.";
+                break;
+            case "Ctrl Alt Defeat":
+                comment = name + " stürzt ab. Ein Neustart ist erforderlich.";
+                break;
+            case "Blue Screen":
+                comment = name + " bleibt einfach stehen und verlangt einen System-Admin.";
+                break;
+            case "Mane Character":
+                comment = name + " drängt sich extrem unangenehm in den Mittelpunkt.";
+                break;
+            case "Crypto Bro":
+                comment = name + " erzählt den anderen Pferden, dass sie in Dogecoin investieren sollen.";
+                break;
+            case "Wife's Alibi":
+                comment = name + " war angeblich zur Zeit des Rennens im Büro.";
+                break;
+            case "Midlife Crisis":
+                comment = name + " hat sich eine teure Satteltasche gekauft und rast jetzt kopflos umher.";
+                break;
+            case "Fake News":
+                comment = name + " behauptet, er sei schon längst im Ziel.";
+                break;
+            case "Harry Trotter":
+                comment = name + " zaubert einen ordentlichen Sprint aus dem Hut!";
+                break;
+            case "Jon Bon Pony":
+                comment = name + " is halfway there, living on a prayer!";
+                break;
+            case "Sylvester Stallion":
+                comment = name + " boxt sich rücksichtslos durch das Teilnehmerfeld!";
+                break;
+            case "Pony Stark":
+                comment = name + " hat sich einen verdächtigen Reaktor auf die Brust geschnallt.";
+                break;
             default:
                 String[] general = {
                         name + " erleidet einen plötzlichen Motivationsverlust.",
@@ -595,7 +773,11 @@ public class GameUI extends JFrame {
                         "Jemand im Publikum hat 'Leckerli' gerufen – " + name + " ist sichtlich abgelenkt.",
                         name + " überlegt kurz, ob ein Leben als Lasagne nicht doch stressfreier wäre.",
                         name + " trabt wie bei einem Sonntagsausflug.",
-                        name + " zieht plötzlich gnadenlos an. Wurde da gedopt?"
+                        name + " zieht plötzlich gnadenlos an. Wurde da gedopt?",
+                        "Der Jockey von " + name + " versucht verzweifelt das Lenkrad zu finden.",
+                        name + " schnaubt bedrohlich. Die anderen Pferde machen freiwillig Platz.",
+                        name + " bleibt stehen und starrt einen Schmetterling an. Unfassbar.",
+                        "Was macht " + name + " da? Das sieht eher nach Breakdance als nach Galopp aus!"
                 };
                 comment = general[random.nextInt(general.length)];
                 break;
@@ -617,12 +799,10 @@ public class GameUI extends JFrame {
 
             if (winAmount > 0) {
                 log("$$$ GEWONNEN! Du erhältst " + String.format("%.2f", winAmount) + " $!");
-                JOptionPane.showMessageDialog(this, "Glückwunsch! " + winner.getName() + " hat gewonnen!\nDu gewinnst "
-                        + String.format("%.2f", winAmount) + " $!");
+                raceTrackPanel.setMoneyRain(true);
+                postRaceTimer.start();
             } else {
                 log("--- Verloren. Dein Geld ist nun im Casino-Tresor.");
-                JOptionPane.showMessageDialog(this,
-                        winner.getName() + " gewinnt.\nDeine Wette war leider ein Schuss in den Ofen.");
             }
         } else {
             log("Keine Wette platziert.");

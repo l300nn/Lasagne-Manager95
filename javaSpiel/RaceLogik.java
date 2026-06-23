@@ -12,14 +12,18 @@ public class RaceLogik {
     private List<Double> currentOdds;
     private Random random;
 
-    // Ein Pool an witzigen/kontroversen GTA-Style Namen
+    // Ein stark vergrößerter Pool an witzigen/kontroversen Arcade/GTA-Style Namen
     private List<String> horseNamePool = Arrays.asList(
         "Glue Factory", "Al Capony", "Hoof Hearted", "Usain Colt", 
         "Pony Soprano", "Tax Evasion", "My Little Crony", "OnlyFoals",
         "Divorce Settlement", "Sugar Daddy", "Dust Eater", "Neigh Sayer",
         "Trojan Horse", "Bad Investment", "Mane Attraction", "Neighbeline",
         "Jon Bon Pony", "Harry Trotter", "Sylvester Stallion", "Wife's Alibi",
-        "Bitcoin Crash", "Midlife Crisis", "Fake News", "Pony Stark"
+        "Bitcoin Crash", "Midlife Crisis", "Fake News", "Pony Stark",
+        "Elon's Musk", "Zucker-Burger", "Influencer Tears", "Student Loan", 
+        "Wi-Fi Password", "404 Not Found", "Clickbait", "Terms & Conditions", 
+        "Spam Folder", "NFT Bubble", "Ctrl Alt Defeat", "Blue Screen",
+        "Mane Character", "Crypto Bro", "Error 500", "Dial-Up Speed"
     );
 
     // Verschiedene Farben für die Pferde
